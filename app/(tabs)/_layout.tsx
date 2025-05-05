@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import {
   Phone,
   Video,
@@ -8,8 +8,26 @@ import {
   House,
 } from "lucide-react-native";
 import { Platform } from "react-native";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function TabLayout() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem("userToken");
+      setIsAuthenticated(!!token);
+    };
+    checkAuth();
+  }, []);
+
+  if (isAuthenticated === null) return null;
+
+  if (!isAuthenticated) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
