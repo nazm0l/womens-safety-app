@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,84 +6,139 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
+  SafeAreaView,
 } from "react-native";
 import { Play } from "lucide-react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
+import axios from "axios";
 
 type Video = {
-  id: string;
+  _id: string;
   title: string;
-  description: string;
-  thumbnail: string;
-  youtubeId: string;
+  videoURL: string;
+  createdBy: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
-const VIDEOS: Video[] = [
-  {
-    id: "1",
-    title: "Basic Self Defense Techniques",
-    description:
-      "Learn essential self-defense moves that could save your life.",
-    thumbnail:
-      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300",
-    youtubeId: "KVpxP3ZZtAc",
-  },
-  {
-    id: "2",
-    title: "7 Self-Defense Techniques",
-    description:
-      "How to stay aware of your surroundings and avoid dangerous situations.",
-    thumbnail:
-      "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300",
-    youtubeId: "T7aNSRoDCmg",
-  },
-];
+const getYoutubeVideoId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+};
 
 export default function TrainingScreen() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
   const [playingVideo, setPlayingVideo] = useState<string | null>(null);
 
-  const renderVideoCard = ({ item }: { item: Video }) => (
-    <View style={styles.card}>
-      <TouchableOpacity onPress={() => setPlayingVideo(item.id)}>
-        <View style={styles.thumbnailContainer}>
-          <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
-          <View style={styles.playButton}>
-            <Play size={24} color="#fff" />
+  useEffect(() => {
+    fetchVideos();
+  }, []);
+
+  const fetchVideos = async () => {
+    try {
+      const response = await axios.get(
+        "https://women-sepia-two.vercel.app/api/tv"
+      );
+      console.log("Full API Response:", response.data);
+      if (response.data && Array.isArray(response.data)) {
+        setVideos(response.data);
+      } else if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
+        setVideos(response.data.data);
+      } else {
+        console.error("Unexpected API response structure:", response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderVideoCard = ({ item }: { item: Video }) => {
+    const videoId = getYoutubeVideoId(item.videoURL);
+    console.log("Video Item:", item);
+    console.log("Extracted Video ID:", videoId);
+
+    return (
+      <View style={styles.card}>
+        <TouchableOpacity onPress={() => setPlayingVideo(item._id)}>
+          <View style={styles.thumbnailContainer}>
+            <Image
+              source={{
+                uri: videoId
+                  ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+                  : undefined,
+              }}
+              style={styles.thumbnail}
+            />
+            <View style={styles.playButton}>
+              <Play size={24} color="#fff" />
+            </View>
           </View>
+        </TouchableOpacity>
+        <View style={styles.cardContent}>
+          <Text style={styles.videoTitle}>{item.title}</Text>
         </View>
-      </TouchableOpacity>
-      <View style={styles.cardContent}>
-        <Text style={styles.videoTitle}>{item.title}</Text>
-        <Text style={styles.videoDescription}>{item.description}</Text>
+        {playingVideo === item._id && videoId && (
+          <View style={styles.videoPlayer}>
+            <YoutubePlayer height={200} videoId={videoId} />
+          </View>
+        )}
       </View>
-      {playingVideo === item.id && (
-        <View style={styles.videoPlayer}>
-          <YoutubePlayer height={200} videoId={item.youtubeId} />
-        </View>
-      )}
-    </View>
-  );
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF4B6A" />
+      </View>
+    );
+  }
+
+  console.log("Current Videos State:", videos);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Training Videos</Text>
         <Text style={styles.subtitle}>Learn essential safety techniques</Text>
       </View>
 
-      <FlatList
-        data={VIDEOS}
-        renderItem={renderVideoCard}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-      />
-    </View>
+      {videos.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No videos available</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={videos}
+          renderItem={renderVideoCard}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.list}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 30,
+    backgroundColor: "#fff",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "#fff",
   },
   header: {
@@ -145,12 +200,18 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 8,
   },
-  videoDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
   videoPlayer: {
     marginTop: 10,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
   },
 });

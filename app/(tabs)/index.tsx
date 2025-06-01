@@ -7,9 +7,11 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
+  SafeAreaView,
 } from "react-native";
 import { router } from "expo-router";
 import * as Location from "expo-location";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   TriangleAlert,
   Phone,
@@ -20,8 +22,11 @@ import {
 } from "lucide-react-native";
 
 export default function HomeScreen() {
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    null
+  );
   const [volumeDownCount, setVolumeDownCount] = useState(0);
+  const [emergencyContact, setEmergencyContact] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -32,12 +37,28 @@ export default function HomeScreen() {
 
       let location = await Location.getCurrentPositionAsync({});
       setLocation(location as any);
+
+      // Fetch user's emergency contact
+      try {
+        const userInfo = await AsyncStorage.getItem("userInfo");
+        if (userInfo) {
+          const user = JSON.parse(userInfo);
+          setEmergencyContact(user.emergencyContact);
+        }
+      } catch (error) {
+        console.error("Failed to load emergency contact:", error);
+      }
     })();
   }, []);
 
   const handleSOS = async () => {
     if (!location) {
       alert("Location not available");
+      return;
+    }
+
+    if (!emergencyContact) {
+      alert("Emergency contact not set. Please set it in your profile.");
       return;
     }
 
@@ -50,7 +71,7 @@ Google Maps Location: https://www.google.com/maps?q=${location.coords.latitude},
         "token",
         "909316362717460957872c9cf32a5a721c8785998094cb1da059"
       );
-      payload.append("to", "8801705774021");
+      payload.append("to", emergencyContact);
       payload.append("message", message);
 
       const response = await axios.post(
@@ -100,41 +121,48 @@ Google Maps Location: https://www.google.com/maps?q=${location.coords.latitude},
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.sosContainer}>
-        <TouchableOpacity
-          style={styles.sosButton}
-          onPress={handleSOS}
-          onLongPress={handleSOS}
-        >
-          <TriangleAlert size={64} color="#fff" />
-          <Text style={styles.sosText}>SOS</Text>
-        </TouchableOpacity>
-        <Text style={styles.helpText}>Press and hold for emergency</Text>
-        <Text style={styles.infoText}>
-          {Platform.OS === "web"
-            ? "Press arrow down key 3 times quickly to activate SOS"
-            : "Triple press volume down button to activate SOS"}
-        </Text>
-      </View>
-
-      <View style={styles.cardsContainer}>
-        {navigationCards.map((card, index) => (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.sosContainer}>
           <TouchableOpacity
-            key={index}
-            style={[styles.card, { backgroundColor: card.color }]}
-            onPress={() => router.push(card.route as any)}
+            style={styles.sosButton}
+            onPress={handleSOS}
+            onLongPress={handleSOS}
           >
-            <card.icon size={32} color="#fff" />
-            <Text style={styles.cardText}>{card.title}</Text>
+            <TriangleAlert size={64} color="#fff" />
+            <Text style={styles.sosText}>SOS</Text>
           </TouchableOpacity>
-        ))}
+          <Text style={styles.helpText}>Press and hold for emergency</Text>
+          <Text style={styles.infoText}>
+            {Platform.OS === "web"
+              ? "Press arrow down key 3 times quickly to activate SOS"
+              : "Triple press volume down button to activate SOS"}
+          </Text>
+        </View>
+
+        <View style={styles.cardsContainer}>
+          {navigationCards.map((card, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.card, { backgroundColor: card.color }]}
+              onPress={() => router.push(card.route as any)}
+            >
+              <card.icon size={32} color="#fff" />
+              <Text style={styles.cardText}>{card.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    paddingTop: Platform.OS === "android" ? 30 : 0,
+    backgroundColor: "#fff",
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",

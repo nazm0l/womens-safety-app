@@ -7,28 +7,15 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  SafeAreaView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { CreditCard as Edit2, Settings, LogOut } from "lucide-react-native";
+import useUser from "@/hooks/useUser";
 
 export default function ProfileScreen() {
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userInfo = await AsyncStorage.getItem("userInfo");
-        if (userInfo) {
-          setUser(JSON.parse(userInfo));
-        }
-      } catch (error) {
-        console.error("Failed to load user info:", error);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const user = useUser(); // Custom hook to fetch user data
 
   const handleLogout = async () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -54,62 +41,65 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: user.image || "https://placehold.co/120x120" }}
-            style={styles.avatar}
-          />
-          <TouchableOpacity style={styles.editButton}>
-            <Edit2 size={20} color="#fff" />
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.header}>
+          <View style={styles.avatarContainer}>
+            <Image
+              source={{ uri: user.image || "https://placehold.co/120x120" }}
+              style={styles.avatar}
+            />
+            <TouchableOpacity style={styles.editButton}>
+              <Edit2 size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.name}>{user.name}</Text>
+          <Text style={styles.email}>{user.email}</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Personal Information</Text>
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Name</Text>
+              <Text style={styles.infoValue}>{user.name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoValue}>{user.email}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Emergency Contact</Text>
+              <Text style={styles.infoValue}>
+                {user.emergencyContact || "Not Set"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Settings size={20} color="#666" />
+            <Text style={styles.actionText}>Settings</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.logoutButton]}
+            onPress={handleLogout}
+          >
+            <LogOut size={20} color="#FF4B6A" />
+            <Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.email}>{user.email}</Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Personal Information</Text>
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Name</Text>
-            <Text style={styles.infoValue}>{user.name}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Email</Text>
-            <Text style={styles.infoValue}>{user.email}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Emergency Contact</Text>
-            <Text style={styles.infoValue}>
-              {user.emergencyContact || "Not Set"}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Settings size={20} color="#666" />
-          <Text style={styles.actionText}>Settings</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.logoutButton]}
-          onPress={handleLogout}
-        >
-          <LogOut size={20} color="#FF4B6A" />
-          <Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 30,
     backgroundColor: "#fff",
   },
   loadingContainer: {

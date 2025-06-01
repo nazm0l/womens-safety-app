@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   Image,
+  SafeAreaView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -104,70 +105,73 @@ export default function ReportScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Report Child Marriage</Text>
-        <Text style={styles.subtitle}>Help prevent child marriage</Text>
-      </View>
-
-      <View style={styles.form}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Address</Text>
-          <View style={styles.inputContainer}>
-            <MapPin size={20} color="#666" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter location address"
-              value={address}
-              onChangeText={setAddress}
-            />
-          </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.header}>
+          <Text style={styles.title}>Report Child Marriage</Text>
+          <Text style={styles.subtitle}>Help prevent child marriage</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Description</Text>
-          <View style={[styles.inputContainer, styles.textAreaContainer]}>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Describe what happened..."
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={6}
-              textAlignVertical="top"
-            />
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Address</Text>
+            <View style={styles.inputContainer}>
+              <MapPin size={20} color="#666" />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter location address"
+                value={address}
+                onChangeText={setAddress}
+              />
+            </View>
           </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Description</Text>
+            <View style={[styles.inputContainer, styles.textAreaContainer]}>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Describe what happened..."
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={6}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+
+          {image && (
+            <Image
+              source={{ uri: image?.uri }}
+              style={{
+                width: "100%",
+                height: 200,
+                borderRadius: 10,
+                marginBottom: 15,
+              }}
+            />
+          )}
+
+          <TouchableOpacity style={styles.evidenceButton} onPress={pickImage}>
+            <ImageIcon size={24} color="#666" />
+            <Text style={styles.evidenceButtonText}>Select Photo Evidence</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Upload size={20} color="#fff" />
+            <Text style={styles.submitButtonText}>Submit Report</Text>
+          </TouchableOpacity>
         </View>
-
-        {image && (
-          <Image
-            source={{ uri: image?.uri }}
-            style={{
-              width: "100%",
-              height: 200,
-              borderRadius: 10,
-              marginBottom: 15,
-            }}
-          />
-        )}
-
-        <TouchableOpacity style={styles.evidenceButton} onPress={pickImage}>
-          <ImageIcon size={24} color="#666" />
-          <Text style={styles.evidenceButtonText}>Select Photo Evidence</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Upload size={20} color="#fff" />
-          <Text style={styles.submitButtonText}>Submit Report</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 30,
     backgroundColor: "#fff",
   },
   header: {

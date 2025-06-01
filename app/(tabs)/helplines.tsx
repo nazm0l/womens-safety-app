@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  SafeAreaView,
 } from "react-native";
 import { Phone, Search } from "lucide-react-native";
 
@@ -71,7 +72,7 @@ export default function HelplinesScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Emergency Helplines</Text>
         <View style={styles.searchContainer}>
@@ -115,13 +116,14 @@ export default function HelplinesScreen() {
         contentContainerStyle={styles.list}
         numColumns={2}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 30,
     backgroundColor: "#fff",
   },
   header: {
